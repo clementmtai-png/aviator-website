@@ -56,6 +56,15 @@ An **Admin** user can access the **SYSTEM CONTROL PANEL** by:
 ---
 
 ## 🔧 Installation & Running
+
+### Local
 1. Clone the repository or copy the directory.
-2. Open `index.html` in any modern web browser.
+2. Open `index.html` in any modern web browser, or run `npm run dev` and visit http://localhost:3000.
 3. No build step or backend required (pure frontend simulation).
+
+### Deploy to Vercel (live website)
+1. Install the [Vercel CLI](https://vercel.com/cli): `npm i -g vercel`
+2. From the project root, run:
+   - **First time**: `vercel` (log in if prompted, then deploy)
+   - **Production**: `npm run deploy` or `vercel --prod`
+3. Or connect the repo at [vercel.com](https://vercel.com) → **Add New Project** → import this repo; Vercel will use `vercel.json` and deploy automatically on push.
