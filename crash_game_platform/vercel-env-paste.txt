@@ -1,4 +1,0 @@
-PESAPAL_CONSUMER_KEY=your_consumer_key_here
-PESAPAL_CONSUMER_SECRET=your_consumer_secret_here
-PESAPAL_IPN_ID=your_ipn_id_here
-PESAPAL_SANDBOX=true
