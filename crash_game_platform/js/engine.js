@@ -8,6 +8,10 @@ const Engine = {
     history: [],
     forcedCrash: null,
 
+    // Betting System
+    userBet: null, // { amount: number, status: 'betting' | 'cashed' | 'lost' }
+    nextBetAmount: 10.00,
+
     init() {
         this.canvas = Utils.el('game-canvas');
         this.ctx = this.canvas.getContext('2d');
@@ -15,6 +19,14 @@ const Engine = {
         window.onresize = () => this.resize();
 
         Utils.el('action-btn').onclick = () => this.handleAction();
+        // Secondary button also triggers action
+        Utils.el('action-btn-2').onclick = () => this.handleAction();
+
+        // Listen for bet amount changes
+        Utils.el('bet-amount').onchange = (e) => {
+            this.nextBetAmount = parseFloat(e.target.value) || 10.00;
+        };
+
         this.loop();
 
         // Initial round
@@ -30,7 +42,17 @@ const Engine = {
     prepareRound() {
         this.multiplier = 1.00;
         this.running = false;
-        this.history = [];
+
+        // Reset betting status for next round
+        if (this.userBet) {
+            if (this.userBet.status === 'betting') {
+                this.userBet.status = 'lost';
+                UI.notify("Round Over: Better luck next time!", "error");
+            }
+            this.userBet = null;
+        }
+
+        this.updateButtonUI('BET');
 
         // Admin or Random crash point
         this.crashPoint = this.forcedCrash || this.generateCrashPoint();
@@ -40,21 +62,23 @@ const Engine = {
         Utils.el('multiplier-value').className = '';
         Utils.el('multiplier-value').innerText = "1.00x";
 
+        window.dispatchEvent(new CustomEvent('round-start'));
+
         // Start after small delay
-        setTimeout(() => this.start(), 1000);
+        setTimeout(() => this.start(), 2000);
     },
 
     generateCrashPoint() {
         // Realistic crash algorithm
         const r = Math.random();
-        if (r < 0.05) return 1.00; // 5% instant crash
-        return Math.max(1.00, (0.99 / (1 - Math.random())).toFixed(2));
+        if (r < 0.03) return 1.00; // 3% instant crash
+        return Math.max(1.01, (0.99 / (1 - Math.random())).toFixed(2));
     },
 
     start() {
         this.startTime = Date.now();
         this.running = true;
-        UI.notify("Round started!", "info");
+        UI.notify("Taking off!", "info");
     },
 
     crash() {
@@ -62,6 +86,11 @@ const Engine = {
         Utils.show('crash-msg');
         Utils.el('final-multiplier').innerText = this.multiplier.toFixed(2) + "x";
         Utils.el('multiplier-value').classList.add('crashed');
+
+        if (this.userBet && this.userBet.status === 'betting') {
+            this.userBet.status = 'lost';
+            this.updateButtonUI('BET');
+        }
 
         // Record history
         this.addHistory(this.multiplier);
@@ -84,8 +113,56 @@ const Engine = {
             UI.showModal('login-modal');
             return;
         }
-        // Logic for bet/cashout here
-        UI.notify("Bet placed!", "info");
+
+        // 1. PLACE BET (Before round starts or while waiting)
+        if (!this.running && !this.userBet) {
+            const amount = parseFloat(Utils.el('bet-amount').value);
+            if (Wallet.withdraw(amount)) {
+                this.userBet = { amount: amount, status: 'betting' };
+                this.updateButtonUI('WAITING');
+                UI.notify(`Bet Placed: $${amount.toFixed(2)}`, "success");
+            }
+            return;
+        }
+
+        // 2. CASH OUT (During flight)
+        if (this.running && this.userBet && this.userBet.status === 'betting') {
+            const win = this.userBet.amount * this.multiplier;
+            this.userBet.status = 'cashed';
+            this.userBet.winAmount = win;
+            Wallet.addWin(win);
+            this.updateButtonUI('BET'); // Show ready for next round
+            UI.notify(`Cashed Out: $${win.toFixed(2)} @ ${this.multiplier.toFixed(2)}x`, "success");
+            return;
+        }
+    },
+
+    updateButtonUI(state) {
+        const btn1 = Utils.el('action-btn');
+        const btn2 = Utils.el('action-btn-2');
+
+        if (state === 'BET') {
+            btn1.innerText = 'BET';
+            btn1.className = 'bet-btn main-action';
+            btn1.disabled = false;
+            btn2.innerText = 'BET';
+            btn2.className = 'bet-btn secondary-action';
+            btn2.disabled = false;
+        } else if (state === 'WAITING') {
+            btn1.innerText = 'WAITING';
+            btn1.disabled = true;
+            btn2.innerText = 'WAITING';
+            btn2.disabled = true;
+        } else if (state === 'CASHOUT') {
+            const win = (this.userBet.amount * this.multiplier).toFixed(2);
+            btn1.innerText = `CASH OUT\n$${win}`;
+            btn1.className = 'bet-btn cashout-action';
+            btn1.disabled = false;
+            // For now, mirror boat buttons if one is used
+            btn2.innerText = `CASH OUT\n$${win}`;
+            btn2.className = 'bet-btn cashout-action';
+            btn2.disabled = false;
+        }
     },
 
     loop() {
@@ -93,10 +170,14 @@ const Engine = {
             const elapsed = (Date.now() - this.startTime) / 1000;
             this.multiplier = Math.pow(Math.E, 0.06 * elapsed);
 
-            // Core UI update - lightweight
+            // Core UI update
             Utils.el('multiplier-value').innerText = this.multiplier.toFixed(2) + "x";
 
-            // Throttle thick dispatch to 10hz to save main thread but keeps engine at 60hz
+            // Update button if user is betting
+            if (this.userBet && this.userBet.status === 'betting') {
+                this.updateButtonUI('CASHOUT');
+            }
+
             if (Math.floor(elapsed * 10) !== this._lastTick) {
                 this._lastTick = Math.floor(elapsed * 10);
                 window.dispatchEvent(new CustomEvent('game-tick', { detail: { multiplier: this.multiplier } }));
@@ -108,8 +189,6 @@ const Engine = {
         }
 
         this.draw();
-
-        // Use requestAnimationFrame for a buttery 60FPS
         requestAnimationFrame(() => this.loop());
     },
 
@@ -120,37 +199,91 @@ const Engine = {
 
         if (!this.running && this.multiplier === 1) return;
 
-        // Draw flight path
+        // Draw flight path (curved line)
         this.ctx.beginPath();
         this.ctx.strokeStyle = this.running ? '#d32f2f' : '#444';
         this.ctx.lineWidth = 4;
+        this.ctx.lineCap = 'round';
+
+        const points = Math.min(100, (this.multiplier - 1) * 20); // Faster curve visual
 
         // Simple parabolic arc simulation
-        const points = Math.min(100, (this.multiplier - 1) * 50);
-        for (let i = 0; i < points; i++) {
-            const tx = (i / 100) * w * 0.8;
-            const ty = h - (Math.pow(i / 10, 2) + 20);
-            if (i === 0) this.ctx.moveTo(tx, ty);
-            else this.ctx.lineTo(tx, ty);
+        this.ctx.moveTo(w * 0.05, h * 0.85); // Start bottom left
+
+        for (let i = 1; i <= points; i++) {
+            const tx = w * 0.05 + (i / 100) * w * 0.8;
+            const ty = h * 0.85 - (Math.pow(i / 10, 2.2) * 2.5);
+            this.ctx.lineTo(tx, ty);
         }
         this.ctx.stroke();
 
-        // Draw Plane Sprite (Simplified as a red triangle for now)
-        const px = (points / 100) * w * 0.8;
-        const py = h - (Math.pow(points / 10, 2) + 20);
+        // Draw Glow
+        if (this.running) {
+            this.ctx.shadowBlur = 15;
+            this.ctx.shadowColor = 'rgba(211, 47, 47, 0.6)';
+        } else {
+            this.ctx.shadowBlur = 0;
+        }
+
+        // Draw Plane Sprite (Aeroplane Theme)
+        const px = w * 0.05 + (points / 100) * w * 0.8;
+        const py = h * 0.85 - (Math.pow(points / 10, 2.2) * 2.5);
+
+        this.drawAirplane(px, py);
+    },
+
+    drawAirplane(x, y) {
+        this.ctx.save();
+        this.ctx.translate(x, y);
+
+        // Slight tilt based on flight status
+        if (this.running) {
+            this.ctx.rotate(-0.2 + Math.sin(Date.now() / 200) * 0.05);
+        }
 
         this.ctx.fillStyle = '#d32f2f';
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 1;
+
+        // Fuselage
         this.ctx.beginPath();
-        this.ctx.moveTo(px, py);
-        this.ctx.lineTo(px - 20, py + 5);
-        this.ctx.lineTo(px - 15, py - 10);
+        this.ctx.ellipse(0, 0, 20, 6, 0, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        // Wings
+        this.ctx.beginPath();
+        this.ctx.moveTo(-5, 0);
+        this.ctx.lineTo(-12, -15);
+        this.ctx.lineTo(2, -15);
+        this.ctx.lineTo(8, 0);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(-5, 0);
+        this.ctx.lineTo(-12, 12);
+        this.ctx.lineTo(2, 12);
+        this.ctx.lineTo(8, 0);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        // Tail
+        this.ctx.beginPath();
+        this.ctx.moveTo(-18, 0);
+        this.ctx.lineTo(-25, -8);
+        this.ctx.lineTo(-20, 0);
+        this.ctx.lineTo(-25, 8);
         this.ctx.closePath();
         this.ctx.fill();
+        this.ctx.stroke();
 
-        // Action glow
-        if (this.running) {
-            this.ctx.shadowBlur = 20;
-            this.ctx.shadowColor = 'rgba(211, 47, 47, 0.5)';
-        }
+        // Cockpit
+        this.ctx.fillStyle = '#000';
+        this.ctx.beginPath();
+        this.ctx.arc(12, -2, 3, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.restore();
     }
 };

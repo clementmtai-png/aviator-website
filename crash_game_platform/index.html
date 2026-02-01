@@ -22,10 +22,11 @@
                 <div class="balance-display hidden" id="balance-area">
                     <span class="currency">USD</span>
                     <span id="user-balance">0.00</span>
-                    <button class="deposit-btn" id="open-wallet">Deposit</button>
+                    <a href="#" class="deposit-btn nav-deposit-link" id="open-wallet" title="Deposit">Deposit</a>
                 </div>
             </div>
             <div class="nav-right" id="auth-nav">
+                <a href="#" class="deposit-btn nav-deposit-link" id="deposit-link" title="Deposit">Deposit</a>
                 <button class="login-btn" onclick="UI.showModal('login-modal')">Login</button>
                 <button class="register-btn" onclick="UI.showModal('register-modal')">Register</button>
             </div>
@@ -42,7 +43,7 @@
 
         <main class="main-content">
             <!-- SIDEBAR: CHAT & HISTORY -->
-            <aside class="sidebar-left">
+            <aside class="sidebar-left mobile-hide" id="sidebar-bets">
                 <div class="sidebar-tabs">
                     <button class="active">Live Bets</button>
                     <button>History</button>
@@ -58,7 +59,7 @@
             </aside>
 
             <!-- CENTER: GAME STAGE -->
-            <section class="game-container">
+            <section class="game-container" id="game-view">
                 <div class="history-bar" id="history-pills">
                     <!-- History pills -->
                 </div>
@@ -99,7 +100,7 @@
             </section>
 
             <!-- SIDEBAR RIGHT: ORGANIC CHAT -->
-            <aside class="sidebar-right chat-column">
+            <aside class="sidebar-right chat-column mobile-hide" id="sidebar-chat">
                 <div class="chat-header">
                     <span>LIVE CHAT</span>
                     <span class="online-count">● 1,242 users</span>
@@ -113,6 +114,22 @@
                 </div>
             </aside>
         </main>
+
+        <!-- MOBILE TAB NAVIGATION -->
+        <div id="mobile-tabs" class="mobile-tabs hidden">
+            <button class="m-tab active" onclick="UI.switchMobileTab('game-view', this)">
+                <span class="m-icon">🎮</span>
+                <span>Game</span>
+            </button>
+            <button class="m-tab" onclick="UI.switchMobileTab('sidebar-bets', this)">
+                <span class="m-icon">📊</span>
+                <span>Bets</span>
+            </button>
+            <button class="m-tab" onclick="UI.switchMobileTab('sidebar-chat', this)">
+                <span class="m-icon">💬</span>
+                <span>Chat</span>
+            </button>
+        </div>
 
         <!-- FLOATING CUSTOMER CARE -->
         <button class="fab-care" id="care-btn" title="Customer Support">
@@ -160,12 +177,23 @@
                     <div class="wallet-body">
                         <h3>Deposit Funds</h3>
                         <div class="payment-methods">
-                            <div class="pay-item active">Visa / Mastercard</div>
-                            <div class="pay-item">M-PESA</div>
-                            <div class="pay-item">Crypto</div>
+                            <div class="pay-item active" data-method="card">Visa / Mastercard</div>
+                            <div class="pay-item" data-method="mpesa">M-PESA</div>
+                            <div class="pay-item" data-method="pesapal">Pesapal</div>
+                            <div class="pay-item" data-method="crypto">Crypto</div>
                         </div>
-                        <input type="number" placeholder="Amount to deposit" id="dep-amount">
+                        <input type="number" placeholder="Min 500 KSH" id="dep-amount">
                         <button class="submit-btn primary" onclick="Wallet.deposit()">Confirm Deposit</button>
+                        <div class="stk-push-area hidden" id="stk-push-area">
+                            <p class="stk-hint">Pay with M-PESA via Pesapal (STK / card).</p>
+                            <input type="email" placeholder="Email (for receipt)" id="dep-email" class="dep-email">
+                            <div class="stk-btns">
+                                <button type="button" class="stk-link-btn" id="stk-payment-btn">Pay via STK
+                                    link</button>
+                                <button type="button" class="stk-link-btn pesapal-btn" id="pesapal-payment-btn">Pay with
+                                    Pesapal</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -58,6 +58,14 @@ const Bets = {
 
         window.addEventListener('game-tick', (e) => {
             const mult = e.detail.multiplier;
+
+            // Update real user row if exists
+            if (Engine.userBet && Engine.userBet.status === 'betting') {
+                this.updateUserRow(mult);
+            } else if (Engine.userBet && Engine.userBet.status === 'cashed') {
+                this.updateUserRow(Engine.userBet.winMult, true);
+            }
+
             this.activeBets.forEach(b => {
                 if (!b.cashedOut && Math.random() < 0.02 && mult > 1.2) {
                     b.cashedOut = true;
@@ -66,6 +74,12 @@ const Bets = {
                 }
             });
         });
+    },
+
+    updateUserRow(val, isFinal = false) {
+        // If we want to show the user at the top, we'd need to manage an element for them
+        // For simplicity, let's just make sure UI notifications are the primary feedback
+        // as the list is mostly for 'organic' simulation.
     },
 
     createRandomBet() {

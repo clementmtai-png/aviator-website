@@ -14,15 +14,49 @@ const UI = {
             Auth.login(user, pass);
         };
 
-        Utils.el('open-wallet').onclick = () => this.showModal('wallet-modal');
+        const goDeposit = () => {
+            if (CONFIG.DEPOSIT_LINK) {
+                window.open(CONFIG.DEPOSIT_LINK, '_blank', 'noopener');
+            } else {
+                this.showModal('wallet-modal');
+            }
+        };
+        Utils.el('open-wallet').addEventListener('click', (e) => { e.preventDefault(); goDeposit(); });
+        const depositLink = document.getElementById('deposit-link');
+        if (depositLink) depositLink.addEventListener('click', (e) => { e.preventDefault(); goDeposit(); });
 
         Utils.el('care-btn').onclick = () => {
             this.notify("Connecting to a live agent...", "info");
             setTimeout(() => this.notify("Agent 'Sarah' has joined the chat.", "info"), 2000);
         };
 
-        // Remove logo click trigger for admin
+        // Navbar Logo Admin Toggle (Legacy, but kept logic clean)
         document.querySelector('.logo').onclick = null;
+
+        // Mobile responsiveness check on load
+        this.checkMobile();
+        window.addEventListener('resize', () => this.checkMobile());
+    },
+
+    checkMobile() {
+        if (window.innerWidth <= 1024) {
+            const tabEl = Utils.el('mobile-tabs');
+            if (tabEl) tabEl.classList.remove('hidden');
+            // On mobile ensure only game view is visible by default
+            const gameView = Utils.el('game-view');
+            const sidebarBets = Utils.el('sidebar-bets');
+            const sidebarChat = Utils.el('sidebar-chat');
+            if (gameView) gameView.classList.remove('mobile-hide');
+            if (sidebarBets) sidebarBets.classList.add('mobile-hide');
+            if (sidebarChat) sidebarChat.classList.add('mobile-hide');
+        } else {
+            const tabEl = Utils.el('mobile-tabs');
+            if (tabEl) tabEl.classList.add('hidden');
+            ['game-view', 'sidebar-bets', 'sidebar-chat'].forEach(id => {
+                const el = Utils.el(id);
+                if (el) el.classList.remove('mobile-hide');
+            });
+        }
     },
 
     showModal(id) {
@@ -50,6 +84,25 @@ const UI = {
             div.classList.remove('visible');
             setTimeout(() => div.remove(), 500);
         }, 3000);
+    },
+
+    switchMobileTab(viewId, btn) {
+        // Hide all mobile views
+        const views = ['game-view', 'sidebar-bets', 'sidebar-chat'];
+        views.forEach(id => {
+            const el = Utils.el(id);
+            if (el) {
+                if (id === viewId) {
+                    el.classList.remove('mobile-hide');
+                } else {
+                    el.classList.add('mobile-hide');
+                }
+            }
+        });
+
+        // Update tab buttons
+        document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
     }
 };
 
@@ -57,6 +110,7 @@ const UI = {
 document.addEventListener('DOMContentLoaded', () => {
     Auth.init();
     UI.init();
+    Wallet.init();
     Chat.init();
     Engine.init();
 });
