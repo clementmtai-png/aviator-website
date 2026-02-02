@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StakeBets | Premium Crash Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="dark-theme">
+    <div id="app">
+        <!-- TOP NAVIGATION -->
+        <nav class="navbar">
+            <div class="nav-left">
+                <div class="logo">STAKE<span>BETS</span></div>
+            </div>
+            <div class="nav-center">
+                <div class="balance-display hidden" id="balance-area">
+                    <span class="currency">KES</span>
+                    <span id="user-balance">0.00</span>
+                    <a href="#" class="deposit-btn nav-deposit-link" id="open-wallet" title="Deposit">Deposit</a>
+                    <a href="#" class="withdraw-btn nav-deposit-link" id="open-withdraw" title="Withdraw">Withdraw</a>
+                </div>
+            </div>
+            <div class="nav-right" id="auth-nav">
+                <button class="login-btn" onclick="UI.showModal('login-modal')">Login</button>
+                <button class="register-btn" onclick="UI.showModal('register-modal')">Register</button>
+            </div>
+            <div class="nav-right hidden" id="user-nav">
+                <button class="login-btn hidden" id="admin-access-btn"
+                    onclick="UI.showModal('admin-modal'); Admin.refresh();"
+                    style="border-color: var(--primary-red); color: var(--primary-red);">Admin</button>
+                <div class="user-info">
+                    <span id="username-display">User</span>
+                    <div class="avatar"></div>
+                </div>
+                <button class="logout-btn" id="logout-btn" title="Logout">Logout</button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- SIDEBAR: CHAT & HISTORY -->
+            <aside class="sidebar-left mobile-hide" id="sidebar-bets">
+                <div class="sidebar-tabs">
+                    <button class="active">Live Bets</button>
+                    <button>History</button>
+                </div>
+                <div class="bet-list-header">
+                    <span>User</span>
+                    <span>Stake</span>
+                    <span>Cashout</span>
+                </div>
+                <div class="bet-list" id="active-bets-list">
+                    <!-- Live bets injected by bets.js -->
+                </div>
+            </aside>
+
+            <!-- CENTER: GAME STAGE -->
+            <section class="game-container" id="game-view">
+                <div class="history-bar" id="history-pills">
+                    <!-- History pills -->
+                </div>
+
+                <div class="game-stage">
+                    <div class="canvas-wrapper">
+                        <canvas id="game-canvas"></canvas>
+                        <div class="multiplier-overlay">
+                            <div id="multiplier-value">1.00x</div>
+                        </div>
+                        <div id="crash-msg" class="crash-overlay hidden">
+                            <span class="flew-away">CRASHED!</span>
+                            <span id="final-multiplier">2.50x</span>
+                        </div>
+                    </div>
+
+                    <div class="controls-area">
+                        <div class="bet-control">
+                            <div class="input-group">
+                                <label>Amount</label>
+                                <input type="number" value="10.00" id="bet-amount">
+                                <div class="quick-btns">
+                                    <button onclick="UI.adjustBet(0.5)">1/2</button>
+                                    <button onclick="UI.adjustBet(2)">2x</button>
+                                </div>
+                            </div>
+                            <button class="bet-btn main-action" id="action-btn">BET</button>
+                        </div>
+                        <div class="bet-control">
+                            <div class="input-group">
+                                <label>Auto Cash Out</label>
+                                <input type="number" value="2.00" step="0.1" id="auto-cash">
+                            </div>
+                            <button class="bet-btn secondary-action" id="action-btn-2">BET</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SIDEBAR RIGHT: ORGANIC CHAT -->
+            <aside class="sidebar-right chat-column mobile-hide" id="sidebar-chat">
+                <div class="chat-header">
+                    <span>LIVE CHAT</span>
+                    <span class="online-count">● 1,242 users</span>
+                </div>
+                <div class="chat-messages" id="chat-box">
+                    <!-- Organic chat injected here -->
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" placeholder="Say something..." id="chat-input" disabled>
+                    <button id="send-chat" disabled>➤</button>
+                </div>
+            </aside>
+        </main>
+
+        <!-- MOBILE TAB NAVIGATION -->
+        <div id="mobile-tabs" class="mobile-tabs hidden">
+            <button class="m-tab active" onclick="UI.switchMobileTab('game-view', this)">
+                <span class="m-icon">🎮</span>
+                <span>Game</span>
+            </button>
+            <button class="m-tab" onclick="UI.switchMobileTab('sidebar-bets', this)">
+                <span class="m-icon">📊</span>
+                <span>Bets</span>
+            </button>
+            <button class="m-tab" onclick="UI.switchMobileTab('sidebar-chat', this)">
+                <span class="m-icon">💬</span>
+                <span>Chat</span>
+            </button>
+        </div>
+
+        <!-- FLOATING CUSTOMER CARE -->
+        <button class="fab-care" id="care-btn" title="Customer Support">
+            <span class="msg-icon">💬</span>
+            <span class="btn-text">Support</span>
+        </button>
+
+        <!-- MODALS -->
+        <div id="modals">
+            <!-- Login Modal -->
+            <div class="modal hidden" id="login-modal">
+                <div class="modal-content glass">
+                    <button class="close-modal" onclick="UI.hideModal('login-modal')">&times;</button>
+                    <h2>Welcome Back</h2>
+                    <form id="login-form">
+                        <input type="text" placeholder="Username or Phone" required>
+                        <input type="password" placeholder="Password" required>
+                        <button type="submit" class="submit-btn">Login</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Register Modal -->
+            <div class="modal hidden" id="register-modal">
+                <div class="modal-content glass">
+                    <button class="close-modal" onclick="UI.hideModal('register-modal')">&times;</button>
+                    <h2>Create Account</h2>
+                    <form id="register-form">
+                        <input type="text" id="reg-user" placeholder="Desired Username" required>
+                        <input type="tel" id="reg-phone" placeholder="Phone Number" required>
+                        <input type="password" placeholder="Password" required>
+                        <button type="submit" class="submit-btn primary">Join Now</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Wallet Modal -->
+            <div class="modal hidden" id="wallet-modal">
+                <div class="modal-content glass wide">
+                    <button class="close-modal" onclick="UI.hideModal('wallet-modal')">&times;</button>
+                    <div class="wallet-tabs">
+                        <button class="w-tab active" data-wallet-tab="deposit">Deposit</button>
+                        <button class="w-tab" data-wallet-tab="withdraw">Withdraw</button>
+                    </div>
+                    <!-- Deposit panel -->
+                    <div class="wallet-body" id="wallet-deposit-panel">
+                        <h3>Deposit Funds via Pesapal</h3>
+
+                        <div class="input-group-wallet">
+                            <label for="dep-amount">Amount (KES)</label>
+                            <input type="number" placeholder="Min 500" id="dep-amount" class="wallet-input" min="500">
+                        </div>
+
+
+
+
+
+                        <button class="submit-btn primary" onclick="Wallet.deposit()">Deposit</button>
+                        <p class="deposit-hint">You will receive an M-PESA PIN prompt on your phone.</p>
+                    </div>
+                    <!-- Withdraw panel -->
+                    <div class="wallet-body hidden" id="wallet-withdraw-panel">
+                        <h3>Withdraw Funds</h3>
+                        <div class="payment-methods withdraw-methods">
+                            <div class="pay-item active" data-wmethod="card">Visa / Mastercard</div>
+                            <div class="pay-item" data-wmethod="mpesa">M-PESA</div>
+                            <div class="pay-item" data-wmethod="pesapal">Pesapal</div>
+                            <div class="pay-item" data-wmethod="crypto">Crypto</div>
+                        </div>
+                        <input type="number" placeholder="Amount to withdraw (Min 1500)" id="withdraw-amount">
+                        <input type="text" placeholder="M-PESA / Phone number" id="withdraw-phone"
+                            class="optional-field">
+                        <button class="submit-btn primary withdraw-submit" onclick="Wallet.requestWithdraw()">Confirm
+                            Withdraw</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Modal (Hidden) -->
+            <div class="modal hidden" id="admin-modal">
+                <div class="modal-content glass extra-wide">
+                    <button class="close-modal" onclick="UI.hideModal('admin-modal')">&times;</button>
+                    <h2 class="admin-title">SYSTEM CONTROL PANEL</h2>
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <h3>Next Crash Point</h3>
+                            <div class="flex-row">
+                                <input type="number" id="next-crash-input" step="0.01" placeholder="Auto">
+                                <button onclick="Admin.setNextCrash()">FORCE</button>
+                            </div>
+                            <button class="submit-btn" style="margin-top: 10px; padding: 10px;"
+                                onclick="Admin.showForcePopup()">FORCE RUN POPUP</button>
+                            <p class="hint">Leave empty for organic random</p>
+                        </div>
+                        <div class="admin-card">
+                            <h3>User Monitoring</h3>
+                            <div id="admin-user-list" class="mini-list">
+                                <!-- User balances here -->
+                            </div>
+                        </div>
+                        <div class="admin-card">
+                            <h3>Active Round</h3>
+                            <div id="admin-live-stats">
+                                <!-- Live bets info -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pusher for real-time sync -->
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/wallet.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/bets.js"></script>
+    <script src="js/realtime.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
