@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "framework": null,
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "* * * * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
+}
