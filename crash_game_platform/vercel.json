@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "framework": null,
+  "functions": {
+    "api/cron.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/debug-env",
+      "destination": "/api/debug-env.js"
+    },
+    {
+      "source": "/api/debug-game",
+      "destination": "/api/debug-game.js"
+    },
+    {
+      "source": "/api/pesapal/initiate",
+      "destination": "/api/pesapal/index.js?action=initiate"
+    },
+    {
+      "source": "/api/pesapal/check-status",
+      "destination": "/api/pesapal/index.js?action=check-status"
+    },
+    {
+      "source": "/api/pesapal/register-ipn",
+      "destination": "/api/pesapal/index.js?action=register-ipn"
+    },
+    {
+      "source": "/api/user/balance",
+      "destination": "/api/user/index.js?action=balance"
+    },
+    {
+      "source": "/api/user/credit",
+      "destination": "/api/user/index.js?action=credit"
+    },
+    {
+      "source": "/api/user/debit",
+      "destination": "/api/user/index.js?action=debit"
+    },
+    {
+      "source": "/api/game/history",
+      "destination": "/api/game/index.js?action=history"
+    },
+    {
+      "source": "/api/game/bet",
+      "destination": "/api/game/index.js?action=bet"
+    },
+    {
+      "source": "/api/game/cashout",
+      "destination": "/api/game/index.js?action=cashout"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "* * * * *"
+    }
+  ]
+}
