@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StakeBets | Premium Crash Platform</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%23d32f2f' width='32' height='32' rx='6'/><text x='16' y='22' font-size='18' text-anchor='middle' fill='white'>S</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="dark-theme">
+    <div id="app">
+        <!-- TOP NAVIGATION -->
+        <nav class="navbar">
+            <div class="nav-left">
+                <div class="logo">STAKE<span>BETS</span></div>
+            </div>
+            <div class="nav-center">
+                <div class="balance-display hidden" id="balance-area">
+                    <span class="currency">KES</span>
+                    <span id="user-balance">0.00</span>
+                    <div class="nav-wallet-actions">
+                        <button class="nav-wallet-btn deposit" id="open-wallet" title="Deposit Funds">
+                            <span class="icon">+</span> DEPOSIT
+                        </button>
+                        <button class="nav-wallet-btn withdraw" id="open-withdraw" title="Withdraw Funds">
+                            <span class="icon">−</span> WITHDRAW
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-right" id="auth-nav">
+                <button class="login-btn" onclick="UI.showModal('login-modal')">Login</button>
+                <button class="register-btn" onclick="UI.showModal('register-modal')">Register</button>
+            </div>
+            <div class="nav-right hidden" id="user-nav">
+                <button class="login-btn hidden" id="admin-access-btn"
+                    onclick="UI.showModal('admin-modal'); Admin.refresh();"
+                    style="border-color: var(--primary-red); color: var(--primary-red);">Admin</button>
+                <div class="user-info">
+                    <span id="username-display">User</span>
+                    <div class="avatar"></div>
+                </div>
+                <button class="logout-btn" id="logout-btn" title="Logout">Logout</button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- SIDEBAR: CHAT & HISTORY -->
+            <aside class="sidebar-left mobile-hide" id="sidebar-bets">
+                <div class="sidebar-tabs">
+                    <button class="sidebar-tab-btn active" onclick="UI.switchSidebarTab('live-bets', this)">Live
+                        Bets</button>
+                    <button class="sidebar-tab-btn" onclick="UI.switchSidebarTab('history', this)">History</button>
+                </div>
+                <!-- Live Bets Panel -->
+                <div id="live-bets-panel">
+                    <div class="bet-list-header">
+                        <span>User</span>
+                        <span>Stake</span>
+                        <span>Cashout</span>
+                    </div>
+                    <div class="bet-list" id="active-bets-list">
+                        <!-- Live bets injected by bets.js -->
+                    </div>
+                </div>
+                <!-- History Panel -->
+                <div id="history-panel" class="hidden">
+                    <div class="bet-list-header">
+                        <span>Round</span>
+                        <span>Stake</span>
+                        <span>Result</span>
+                    </div>
+                    <div class="bet-list" id="history-bets-list">
+                        <!-- History injected by bets.js -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER: GAME STAGE -->
+            <section class="game-container" id="game-view">
+                <div class="history-bar" id="history-pills">
+                    <!-- History pills -->
+                </div>
+
+                <div class="game-stage">
+                    <div class="canvas-wrapper">
+                        <canvas id="game-canvas"></canvas>
+                        <div class="multiplier-overlay">
+                            <div id="multiplier-value">1.00x</div>
+                            <div id="golden-hour-badge" class="golden-hour-badge hidden">🌟 GOLDEN HOUR — 20x+ runs
+                            </div>
+                        </div>
+                        <div id="crash-msg" class="crash-overlay hidden">
+                            <span class="flew-away">CRASHED!</span>
+                            <span id="final-multiplier">2.50x</span>
+                        </div>
+                    </div>
+
+                    <div class="controls-area">
+                        <div class="bet-control">
+                            <div class="input-group">
+                                <label for="bet-amount">Amount</label>
+                                <input type="number" value="10.00" id="bet-amount" name="bet-amount">
+                                <div class="quick-btns">
+                                    <button onclick="UI.adjustBet(0.5)">1/2</button>
+                                    <button onclick="UI.adjustBet(2)">2x</button>
+                                </div>
+                            </div>
+                            <button class="bet-btn main-action" id="action-btn">BET</button>
+                        </div>
+                        <div class="bet-control">
+                            <div class="input-group">
+                                <label for="auto-cash">Auto Cash Out</label>
+                                <input type="number" value="2.00" step="0.1" id="auto-cash" name="auto-cash">
+                            </div>
+                            <button class="bet-btn secondary-action" id="action-btn-2">BET</button>
+                        </div>
+                    </div>
+                    <!-- Mobile: Live Bets below game controls -->
+                    <div class="mobile-live-bets-wrap" id="mobile-live-bets-wrap">
+                        <div class="mobile-live-bets-title">Live Bets</div>
+                        <div class="bet-list-header">
+                            <span>User</span>
+                            <span>Stake</span>
+                            <span>Cashout</span>
+                        </div>
+                        <div class="bet-list bet-list-mobile" id="active-bets-list-mobile"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SIDEBAR RIGHT: ORGANIC CHAT -->
+            <aside class="sidebar-right chat-column mobile-hide" id="sidebar-chat">
+                <div class="chat-header">
+                    <span>LIVE CHAT</span>
+                    <span class="online-count">● 1,242 users</span>
+                </div>
+                <div class="chat-messages" id="chat-box">
+                    <!-- Organic chat injected here -->
+                </div>
+                <div class="chat-input-area">
+                    <label for="chat-input" class="sr-only">Chat Message</label>
+                    <input type="text" placeholder="Say something..." id="chat-input" name="chat-message" disabled>
+                    <button id="send-chat" disabled>➤</button>
+                </div>
+            </aside>
+        </main>
+
+        <!-- MOBILE TAB NAVIGATION -->
+        <div id="mobile-tabs" class="mobile-tabs hidden">
+            <button class="m-tab active" onclick="UI.switchMobileTab('game-view', this)">
+                <span class="m-icon">🎮</span>
+                <span>Game</span>
+            </button>
+            <button class="m-tab" onclick="UI.switchMobileTab('sidebar-bets', this)">
+                <span class="m-icon">📊</span>
+                <span>Bets</span>
+            </button>
+            <button class="m-tab" onclick="UI.switchMobileTab('sidebar-chat', this)">
+                <span class="m-icon">💬</span>
+                <span>Chat</span>
+            </button>
+        </div>
+
+        <!-- FLOATING CUSTOMER CARE -->
+        <button class="fab-care" id="care-btn" title="Customer Support">
+            <span class="msg-icon">💬</span>
+            <span class="btn-text">Support</span>
+        </button>
+
+        <!-- MODALS -->
+        <div id="modals">
+            <!-- Login Modal -->
+            <div class="modal hidden" id="login-modal">
+                <div class="modal-content glass">
+                    <button class="close-modal" onclick="UI.hideModal('login-modal')">&times;</button>
+                    <h2>Welcome Back</h2>
+                    <form id="login-form">
+                        <div class="input-group-modal">
+                            <label for="login-user">Username or Email</label>
+                            <input type="text" id="login-user" name="username" placeholder="Username or Email" required>
+                        </div>
+                        <div class="input-group-modal">
+                            <label for="login-pass">Password</label>
+                            <input type="password" id="login-pass" name="password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="submit-btn">Login</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Register Modal -->
+            <div class="modal hidden" id="register-modal">
+                <div class="modal-content glass">
+                    <button class="close-modal" onclick="UI.hideModal('register-modal')">&times;</button>
+                    <h2>Create Account</h2>
+                    <form id="register-form">
+                        <div class="input-group-modal">
+                            <label for="reg-user">Desired Username</label>
+                            <input type="text" id="reg-user" name="username" placeholder="Desired Username" required>
+                        </div>
+                        <div class="input-group-modal">
+                            <label for="reg-email">Email Address</label>
+                            <input type="email" id="reg-email" name="email" placeholder="Email Address" required>
+                        </div>
+                        <div class="input-group-modal">
+                            <label for="reg-pass">Password</label>
+                            <input type="password" id="reg-pass" name="password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="submit-btn primary">Join Now</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Wallet Modal -->
+            <div class="modal hidden" id="wallet-modal">
+                <div class="modal-content glass wide">
+                    <button class="close-modal" onclick="UI.hideModal('wallet-modal')">&times;</button>
+                    <div class="wallet-tabs">
+                        <button class="w-tab active" data-wallet-tab="deposit">Deposit</button>
+                        <button class="w-tab" data-wallet-tab="withdraw">Withdraw</button>
+                    </div>
+                    <!-- Deposit panel -->
+                    <div class="wallet-body" id="wallet-deposit-panel">
+                        <div class="wallet-minimal-header">
+                            <h3>Deposit Funds</h3>
+                            <p>Enter the amount to deposit via M-PESA / Pesapal</p>
+                        </div>
+
+                        <div class="input-group-wallet-minimal">
+                            <label for="dep-amount">Amount (KES)</label>
+                            <input type="number" placeholder="Min 500 KES" id="dep-amount" name="dep-amount"
+                                class="wallet-input-minimal">
+                        </div>
+
+                        <button class="submit-btn primary" onclick="Wallet.deposit()">Confirm Deposit</button>
+                    </div>
+
+                    <!-- Withdraw panel -->
+                    <div class="wallet-body hidden" id="wallet-withdraw-panel">
+                        <div class="wallet-minimal-header">
+                            <h3>Withdraw Funds</h3>
+                            <p>Funds will be sent to your registered phone number</p>
+                        </div>
+
+                        <div class="input-group-wallet-minimal">
+                            <label for="withdraw-amount">Amount (KES)</label>
+                            <input type="number" placeholder="Amount to withdraw" id="withdraw-amount"
+                                name="withdraw-amount" class="wallet-input-minimal">
+                        </div>
+
+                        <button class="submit-btn primary withdraw-submit" onclick="Wallet.requestWithdraw()">Confirm
+                            Withdrawal</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Modal (Hidden) -->
+            <div class="modal hidden" id="admin-modal">
+                <div class="modal-content glass extra-wide">
+                    <button class="close-modal" onclick="UI.hideModal('admin-modal')">&times;</button>
+                    <h2 class="admin-title">SYSTEM CONTROL PANEL</h2>
+                    <div class="admin-grid">
+                        <div class="admin-card">
+                            <label for="next-crash-input">Next Crash Point</label>
+                            <div class="flex-row">
+                                <input type="number" id="next-crash-input" name="next-crash-input" step="0.01"
+                                    placeholder="Auto">
+                                <button onclick="Admin.setNextCrash()">FORCE</button>
+                            </div>
+                            <div class="admin-toggle-row">
+                                <label for="golden-hour-toggle">Golden Hour (Test Mode)</label>
+                                <input type="checkbox" id="golden-hour-toggle"
+                                    onchange="Admin.toggleGoldenHour(this.checked)">
+                            </div>
+                            <p class="hint">Golden Hour forces 20x+ multipliers</p>
+                        </div>
+                        <div class="admin-card">
+                            <h3>User Monitoring</h3>
+                            <div id="admin-user-list" class="mini-list">
+                                <!-- User balances here -->
+                            </div>
+                        </div>
+                        <div class="admin-card">
+                            <h3>Active Round</h3>
+                            <div id="admin-live-stats">
+                                <!-- Live bets info -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/wallet.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/bets.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
