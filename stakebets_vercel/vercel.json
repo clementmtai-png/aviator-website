@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/game/state",
+      "destination": "/api/game.js?action=state"
+    },
+    {
+      "source": "/api/game/history",
+      "destination": "/api/game.js?action=history"
+    },
+    {
+      "source": "/api/game/:action",
+      "destination": "/api/game.js?action=:action"
+    },
+    {
+      "source": "/api/user/:action",
+      "destination": "/api/user.js?action=:action"
+    },
+    {
+      "source": "/api/user",
+      "destination": "/api/user.js"
+    },
+    {
+      "source": "/api/game",
+      "destination": "/api/game.js"
+    },
+    {
+      "source": "/api/pesapal/ipn",
+      "destination": "/api/ipn.js"
+    },
+    {
+      "source": "/api/pesapal/:action",
+      "destination": "/api/pesapal.js?action=:action"
+    }
+  ]
+}
